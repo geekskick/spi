@@ -9,9 +9,10 @@ popd () {
     command popd "$@" > /dev/null
 }
 
+ROOT=`git rev-parse --show-toplevel`
 pushd .
-cd ..
-LOG_DIR=`pwd`
+cd ${ROOT}
+LOG_DIR=${ROOT}
 LOG_NAME=output.log
 
 if [[ -f "${LOG_NAME}" ]]; then
@@ -26,8 +27,7 @@ fi
 
 echo "== Making new build directory `pwd`/work" | tee -a ${LOG_DIR}/${LOG_NAME}
 mkdir work
-WORK=`pwd`/work
-ROOT=`pwd`
+WORK=${ROOT}/work
 cd src
 
 echo "== Analysing source files"  | tee -a ${LOG_DIR}/${LOG_NAME}
