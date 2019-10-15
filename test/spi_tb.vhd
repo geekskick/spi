@@ -17,7 +17,7 @@ architecture beh of spi_tb is
     signal rst  : std_logic := '0';
     signal send : std_logic := '0';
     signal finished: std_logic := '0';
-    signal miso : std_logic := '0';
+    signal miso : std_logic := '1';
     signal mosi : std_logic := '0';
     signal data_in: std_logic_vector(data_width-1 downto 0) := (others => '0');
     signal data_out : std_logic_vector(data_width-1 downto 0) := (others => '0');
@@ -59,14 +59,58 @@ begin
         wait for period / 2; -- ensure assertions are after a rising edge
         en <= '0';
         rst <= '0';
-        miso <= '0';
+        miso <= '1';
 
         wait for period;
---        assert mosi = '0' report "mosi changed when not enabled" severity failure;
         
         send <= '1';
         en <= '1';
-        wait for period*900;
+        wait for period *2; -- one tick to load and one to set up the mosi 
+
+        assert mosi = '1' report "MOSI isn't 1" severity failure;
+        assert finished = '0' report "Finished didn't stay low" severity failure;
+        assert sclk_enable = '1' report "sclk isn't enabled" severity failure;
+        wait for period;
+        assert sclk_enable = '0' report "sclk isn't low again" severity failure; 
+
+        wait for period * 99; -- 100 clock ticks for a bit
+        assert sclk_enable = '1' report "sclk isn't enabled" severity failure;
+        assert mosi = '0' report "MOSI didn't go low again" severity failure;
+        assert finished = '0' report "Finished didn't stay low" severity failure;
+
+        wait for period * 100;
+        assert sclk_enable = '1' report "sclk isn't enabled" severity failure;
+        assert mosi = '1' report "MOSI didn't go high again" severity failure;
+        assert finished = '0' report "Finished didn't stay low" severity failure;
+
+        wait for period * 100;
+        assert sclk_enable = '1' report "sclk isn't enabled" severity failure;
+        assert mosi = '0' report "MOSI didn't go low again" severity failure;
+        assert finished = '0' report "Finished didn't stay low" severity failure;
+
+        wait for period * 100;
+        assert sclk_enable = '1' report "sclk isn't enabled" severity failure;
+        assert mosi = '1' report "MOSI didn't go high again" severity failure;
+        assert finished = '0' report "Finished didn't stay low" severity failure;
+
+        wait for period * 100;
+        assert sclk_enable = '1' report "sclk isn't enabled" severity failure;
+        assert mosi = '0' report "MOSI didn't go low again" severity failure;
+        assert finished = '0' report "Finished didn't stay low" severity failure;
+
+        wait for period * 100;
+        assert sclk_enable = '1' report "sclk isn't enabled" severity failure;
+        assert mosi = '1' report "MOSI didn't go high again" severity failure;
+        assert finished = '0' report "Finished didn't stay low" severity failure;
+
+        wait for period * 100;
+        assert sclk_enable = '1' report "sclk isn't enabled" severity failure;
+        assert mosi = '0' report "MOSI didn't go low again" severity failure;
+        assert finished = '0' report "Finished didn't stay low" severity failure;
+
+        wait for period * 100;
+        assert finished = '1' report "Finished didn't assert" severity failure;
+        assert data_in = X"FF" report "Data out doesn't match miso feed" severity failure; 
 
         done <= true;
         report "Done";

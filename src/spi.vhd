@@ -29,12 +29,29 @@ architecture rtl of spi is
     signal i_data_in    : std_logic_vector(data_width-1 downto 0) := (others => '0');
     signal i_data_out   : std_logic_vector(data_width-1 downto 0) := (others => '0');
     signal next_bit     : integer range 0 to data_width := 0;
-    
-       
+     
     signal i_done       : std_logic := '0';
     signal i_mosi       : std_logic := '0';
     signal i_miso       : std_logic := '0';
 
+    procedure shift_out(
+        signal i_data_in    : inout std_logic_vector(data_width-1 downto 0);
+        signal i_data_out   : inout std_logic_vector(data_width-1 downto 0);
+        signal i_mosi       : out std_logic;
+        signal i_miso       : in std_logic
+                       ) is
+    begin
+         if msb_first then
+            i_data_in <= i_miso & i_data_in(data_width-1 downto 1);
+            i_mosi <= i_data_out(data_width-1);
+            i_data_out <= i_data_out(data_width-2 downto 0) & '0';
+        else
+            i_data_in <= i_data_in(data_width-2 downto 0) & i_miso;
+            i_mosi <= i_data_out(0);
+            i_data_out <= '0' & i_data_out(data_width-1 downto 1);
+        end if;
+
+    end procedure;
 begin
 
     -- The actual shifting
@@ -61,7 +78,9 @@ begin
             case current_state is
                 when idle =>
 
+                    i_done <= '0';
                     next_state := idle;
+
                     if send = '1' then
                         i_data_out <= data_out;
                         next_bit <= 0;
@@ -81,17 +100,7 @@ begin
                             next_state := idle;
                         else
                             i_sclk_enable <= '1';
-                            
-                            if msb_first then
-                                i_data_in <= i_miso & i_data_in(data_width-1 downto 1);
-                                i_mosi <= i_data_out(data_width-1);
-                                i_data_out <= i_data_out(data_width-2 downto 0) & '0';
-                            else
-                                i_data_in <= i_data_in(data_width-2 downto 0) & i_miso;
-                                i_mosi <= i_data_out(0);
-                                i_data_out <= '0' & i_data_out(data_width-1 downto 1);
-                            end if;
-                            
+                            shift_out(i_data_in, i_data_out, i_mosi, i_miso);                         
                             next_bit <= next_bit + 1;
                         end if;
                     elsif bit_timer = clk_period-1 then
@@ -105,7 +114,6 @@ begin
         end if;
     end if;
     end process;
-
     
     i_miso <= miso;
     mosi <= i_mosi;
