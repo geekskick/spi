@@ -54,6 +54,12 @@ begin
     end process;
     
     stim: process
+        procedure check_mosi(mosi: in std_logic; sclk_enable: in std_logic; finished : in std_logic; expected_mosi : in std_logic; expected_sclk_enable : in std_logic; expected_finished : in std_logic) is
+        begin
+            assert sclk_enable = expected_sclk_enable report "sclk isn't " & std_logic'image(expected_sclk_enable) severity failure;
+            assert mosi = expected_mosi report "MOSI didn't didn't match " & std_logic'image(expected_mosi) severity failure;
+            assert finished = expected_finished report "Finished isn't " & std_logic'image(expected_finished)  severity failure;
+        end check_mosi;
     begin
         data_out <= X"AA";
         wait for period / 2; -- ensure assertions are after a rising edge
@@ -67,46 +73,30 @@ begin
         en <= '1';
         wait for period *2; -- one tick to load and one to set up the mosi 
 
-        assert mosi = '1' report "MOSI isn't 1" severity failure;
-        assert finished = '0' report "Finished didn't stay low" severity failure;
-        assert sclk_enable = '1' report "sclk isn't enabled" severity failure;
+        check_mosi(mosi, sclk_enable, finished, '1', '1', '0');
         wait for period;
         assert sclk_enable = '0' report "sclk isn't low again" severity failure; 
 
         wait for period * 99; -- 100 clock ticks for a bit
-        assert sclk_enable = '1' report "sclk isn't enabled" severity failure;
-        assert mosi = '0' report "MOSI didn't go low again" severity failure;
-        assert finished = '0' report "Finished didn't stay low" severity failure;
+        check_mosi(mosi, sclk_enable, finished, '0', '1', '0');
 
         wait for period * 100;
-        assert sclk_enable = '1' report "sclk isn't enabled" severity failure;
-        assert mosi = '1' report "MOSI didn't go high again" severity failure;
-        assert finished = '0' report "Finished didn't stay low" severity failure;
+        check_mosi(mosi, sclk_enable, finished, '1', '1', '0');
 
         wait for period * 100;
-        assert sclk_enable = '1' report "sclk isn't enabled" severity failure;
-        assert mosi = '0' report "MOSI didn't go low again" severity failure;
-        assert finished = '0' report "Finished didn't stay low" severity failure;
+        check_mosi(mosi, sclk_enable, finished, '0', '1', '0');
 
         wait for period * 100;
-        assert sclk_enable = '1' report "sclk isn't enabled" severity failure;
-        assert mosi = '1' report "MOSI didn't go high again" severity failure;
-        assert finished = '0' report "Finished didn't stay low" severity failure;
+        check_mosi(mosi, sclk_enable, finished, '1', '1', '0');
 
         wait for period * 100;
-        assert sclk_enable = '1' report "sclk isn't enabled" severity failure;
-        assert mosi = '0' report "MOSI didn't go low again" severity failure;
-        assert finished = '0' report "Finished didn't stay low" severity failure;
+        check_mosi(mosi, sclk_enable, finished, '0', '1', '0');
 
         wait for period * 100;
-        assert sclk_enable = '1' report "sclk isn't enabled" severity failure;
-        assert mosi = '1' report "MOSI didn't go high again" severity failure;
-        assert finished = '0' report "Finished didn't stay low" severity failure;
+        check_mosi(mosi, sclk_enable, finished, '1', '1', '0');
 
         wait for period * 100;
-        assert sclk_enable = '1' report "sclk isn't enabled" severity failure;
-        assert mosi = '0' report "MOSI didn't go low again" severity failure;
-        assert finished = '0' report "Finished didn't stay low" severity failure;
+        check_mosi(mosi, sclk_enable, finished, '0', '1', '0');
 
         wait for period * 100;
         assert finished = '1' report "Finished didn't assert" severity failure;
