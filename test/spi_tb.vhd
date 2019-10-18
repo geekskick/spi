@@ -16,15 +16,35 @@ architecture beh of spi_tb is
     signal en   : std_logic := '0';
     signal rst  : std_logic := '0';
     signal send : std_logic := '0';
-    signal finished: std_logic := '0';
+    signal lsb_finished, msb_finished: std_logic := '0';
     signal miso : std_logic := '1';
-    signal mosi : std_logic := '0';
-    signal data_in: std_logic_vector(data_width-1 downto 0) := (others => '0');
+    signal lsb_mosi, msb_mosi : std_logic := '0';
+    signal msb_data_in, lsb_data_in: std_logic_vector(data_width-1 downto 0) := (others => '0');
     signal data_out : std_logic_vector(data_width-1 downto 0) := (others => '0');
-    signal sclk_enable : std_logic := '0';
+    signal msb_sclk_enable, lsb_sclk_enable : std_logic := '0';
 begin
 
-    uut : entity work.spi
+    lsb_uut : entity work.spi
+    generic map(
+        data_width => data_width, 
+        clk_speed_hz => clk_speed_hz,
+        sclk_speed_hz => sclk_speed_hz,
+        msb_first => false
+    )
+    port map(
+        clk => clk,
+        en => en,
+        rst => rst,
+        mosi => lsb_mosi, 
+        sclk_enable => lsb_sclk_enable,
+        miso => miso, 
+        send => send, 
+        done => lsb_finished, 
+        data_out => data_out, 
+        data_in => lsb_data_in
+    );
+
+    msb_uut : entity work.spi
     generic map(
         data_width => data_width, 
         clk_speed_hz => clk_speed_hz,
@@ -35,13 +55,13 @@ begin
         clk => clk,
         en => en,
         rst => rst,
-        mosi => mosi, 
-        sclk_enable => sclk_enable,
+        mosi => msb_mosi, 
+        sclk_enable => msb_sclk_enable,
         miso => miso, 
         send => send, 
-        done => finished, 
+        done => msb_finished, 
         data_out => data_out, 
-        data_in => data_in
+        data_in => msb_data_in
     );
 
     tick: process
@@ -73,34 +93,38 @@ begin
         en <= '1';
         wait for period *2; -- one tick to load and one to set up the mosi 
 
-        check_mosi(mosi, sclk_enable, finished, '1', '1', '0');
+        check_mosi(lsb_mosi, lsb_sclk_enable, lsb_finished, '0', '1', '0');
+        check_mosi(msb_mosi, msb_sclk_enable, msb_finished, '1', '1', '0');
         wait for period;
-        assert sclk_enable = '0' report "sclk isn't low again" severity failure; 
+        assert msb_sclk_enable = '0' report "sclk isn't low again" severity failure; 
 
         wait for period * 99; -- 100 clock ticks for a bit
-        check_mosi(mosi, sclk_enable, finished, '0', '1', '0');
-
+        check_mosi(msb_mosi, msb_sclk_enable, msb_finished, '0', '1', '0');
+        check_mosi(lsb_mosi, lsb_sclk_enable, lsb_finished, '1', '1', '0');
         wait for period * 100;
-        check_mosi(mosi, sclk_enable, finished, '1', '1', '0');
-
+        check_mosi(msb_mosi, msb_sclk_enable, msb_finished, '1', '1', '0');
+        check_mosi(lsb_mosi, lsb_sclk_enable, lsb_finished, '0', '1', '0');
         wait for period * 100;
-        check_mosi(mosi, sclk_enable, finished, '0', '1', '0');
-
+        check_mosi(msb_mosi, msb_sclk_enable, msb_finished, '0', '1', '0');
+        check_mosi(lsb_mosi, lsb_sclk_enable, lsb_finished, '1', '1', '0');
         wait for period * 100;
-        check_mosi(mosi, sclk_enable, finished, '1', '1', '0');
-
+        check_mosi(msb_mosi, msb_sclk_enable, msb_finished, '1', '1', '0');
+        check_mosi(lsb_mosi, lsb_sclk_enable, lsb_finished, '0', '1', '0');
         wait for period * 100;
-        check_mosi(mosi, sclk_enable, finished, '0', '1', '0');
-
+        check_mosi(msb_mosi, msb_sclk_enable, msb_finished, '0', '1', '0');
+        check_mosi(lsb_mosi, lsb_sclk_enable, lsb_finished, '1', '1', '0');
         wait for period * 100;
-        check_mosi(mosi, sclk_enable, finished, '1', '1', '0');
-
+        check_mosi(msb_mosi, msb_sclk_enable, msb_finished, '1', '1', '0');
+        check_mosi(lsb_mosi, lsb_sclk_enable, lsb_finished, '0', '1', '0');
         wait for period * 100;
-        check_mosi(mosi, sclk_enable, finished, '0', '1', '0');
-
+        check_mosi(msb_mosi, msb_sclk_enable, msb_finished, '0', '1', '0');
+        check_mosi(lsb_mosi, lsb_sclk_enable, lsb_finished, '1', '1', '0');
         wait for period * 100;
-        assert finished = '1' report "Finished didn't assert" severity failure;
-        assert data_in = X"FF" report "Data out doesn't match miso feed" severity failure; 
+        
+        assert msb_finished = '1' report "Finished didn't assert" severity failure;
+        assert msb_data_in = X"FF" report "Data out doesn't match miso feed" severity failure; 
+        assert lsb_finished = '1' report "Finished didn't assert" severity failure;
+        assert lsb_data_in = X"FF" report "Data out doesn't match miso feed" severity failure; 
 
         done <= true;
         report "Done";
