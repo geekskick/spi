@@ -35,20 +35,20 @@ architecture rtl of spi is
     signal i_miso       : std_logic := '0';
 
     procedure shift_out(
-        signal i_data_in    : inout std_logic_vector(data_width-1 downto 0);
-        signal i_data_out   : inout std_logic_vector(data_width-1 downto 0);
-        signal i_mosi       : out std_logic;
-        signal i_miso       : in std_logic
+        signal p_data_in    : inout std_logic_vector(data_width-1 downto 0);
+        signal p_data_out   : inout std_logic_vector(data_width-1 downto 0);
+        signal p_mosi       : out std_logic;
+        signal p_miso       : in std_logic
                        ) is
     begin
          if msb_first then
-            i_data_in <= i_miso & i_data_in(data_width-1 downto 1);
-            i_mosi <= i_data_out(data_width-1);
-            i_data_out <= i_data_out(data_width-2 downto 0) & '0';
+            p_data_in <= p_miso & p_data_in(data_width-1 downto 1);
+            p_mosi <= p_data_out(data_width-1);
+            p_data_out <= p_data_out(data_width-2 downto 0) & '0';
         else
-            i_data_in <= i_data_in(data_width-2 downto 0) & i_miso;
-            i_mosi <= i_data_out(0);
-            i_data_out <= '0' & i_data_out(data_width-1 downto 1);
+            p_data_in <= p_data_in(data_width-2 downto 0) & p_miso;
+            p_mosi <= p_data_out(0);
+            p_data_out <= '0' & p_data_out(data_width-1 downto 1);
         end if;
 
     end procedure;
