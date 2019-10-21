@@ -31,7 +31,13 @@ WORK=${ROOT}/work
 cd src
 
 echo "== Analysing source files"  | tee -a ${LOG_DIR}/${LOG_NAME}
-ENTITIES=(spi spi_tb)
+ENTITIES=(spi_master spi_tb)
+
+echo "== Starting with the package"  | tee -a ${LOG_DIR}/${LOG_NAME}
+echo "  spi_package.vhd" | tee -a ${LOG_DIR}/${LOG_NAME}
+ghdl -a -v --workdir=${WORK} spi_package.vhd | tee -a ${LOG_DIR}/${LOG_NAME}
+
+echo "== Now the rest"  | tee -a ${LOG_DIR}/${LOG_NAME}
 for f in "${ENTITIES[@]}"
 do
     FPATH=""
