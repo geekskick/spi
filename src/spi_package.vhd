@@ -10,8 +10,9 @@ package spi_package is
     end record;
     
     type spi_master_out_t is record
-        data : std_logic_vector(data_width-1 downto 0);
-        valid: std_logic;
+        data    : std_logic_vector(data_width-1 downto 0);
+        valid   : std_logic;
+        sent    : std_logic;
     end record;
 
     type spi_master_pins_t is record
@@ -24,7 +25,8 @@ package spi_package is
         generic(
             clk_speed_hz    : integer range 1_000_000 to 100_000_000;
             sclk_speed_hz   : integer range 9_600 to 100_000;
-            msb_first       : boolean
+            msb_first       : boolean;
+            clk_idle        : std_logic
         );
         port(
             clk : in std_logic;

@@ -9,8 +9,9 @@ architecture beh of spi_tb is
     constant period : time := 100 ns;
     constant clk_speed_hz :integer := 10000000;
     constant sclk_speed_hz:integer := 100000;
+    constant clk_idle   : std_logic := '1';
 
-    signal  clk : std_logic := '0';
+    signal clk  : std_logic := '0';
     signal en   : std_logic := '0';
     signal rst  : std_logic := '0';
 
@@ -20,13 +21,18 @@ architecture beh of spi_tb is
     signal uut_out:spi_master_out_t;
     signal uut_pins:spi_master_pins_t;
 
+    signal valid : std_logic;
+    signal sent : std_logic;
+    signal mosi : std_logic;
+    signal sclk : std_logic;
 begin
 
     msb_uut : entity work.spi_master
     generic map(
         clk_speed_hz => clk_speed_hz,
         sclk_speed_hz => sclk_speed_hz,
-        msb_first => true
+        msb_first => true,
+        clk_idle => clk_idle
     )
     port map(
         clk => clk,
@@ -36,6 +42,11 @@ begin
         q => uut_out,
         pins => uut_pins
     );
+
+    sent <= uut_out.sent;
+    sclk <= uut_pins.clk;
+    valid <= uut_out.valid;
+    mosi <= uut_pins.mosi;
 
     tick: process
     begin
@@ -49,17 +60,44 @@ begin
     stim: process
     begin
         uut_in.data <= X"AA";
-        uut_in.send <= '1';
+        en <= '0';
+        uut_in.send <= '0';
+        rst <= '0';
 
-        wait for period / 2; -- ensure assertions are after a rising edge
+        wait for period / 4; -- ensure assertions are after a rising edge
+
+        wait for period * 9;
+        assert uut_pins.clk = clk_idle report "Clock in wrong idle state" severity failure;
+
+        uut_in.send <= '1';
         en <= '1';
         rst <= '0';
 
-        wait for period * data_width * 100;
-        
+        -- Load the data and start sending
+        wait for period;
+        assert uut_pins.clk = not clk_idle report "Clock didn't change from idle after a tick" severity failure;
+        assert uut_pins.mosi = '1' report "Data wasn't high" severity failure;
+
+        uut_in.send <= '0';
+
+        wait for period * 50;
+        assert uut_pins.clk = clk_idle report "Clock didn't tick back" severity failure;
+
+        wait for period * 50;
+        assert uut_pins.clk = not clk_idle report "Clock didn't change from idle after a tick" severity failure;
+        assert uut_pins.mosi = '0' report "Data wasn't low" severity failure;
+
+        -- Send the rest of the data bits
+        wait for period * (data_width-1) * 100;
+
+        assert sent = '1' report "Sent didn't assert" severity failure;
+        assert uut_pins.clk = clk_idle report "Clock not in idle state" severity failure;
+
+        wait for period;
+        assert sent = '0' report "Sent didn't clear" severity failure;
+        assert uut_pins.clk = clk_idle report "Clock not in idle state" severity failure;
 
         done <= true;
-        report "Done";
         wait;
 
     end process;
