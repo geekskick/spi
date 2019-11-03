@@ -25,7 +25,7 @@ WORK=${ROOT}/work
 cd src
 
 echo "== Analysing source files"  | tee -a ${LOG_DIR}/${LOG_NAME}
-ENTITIES=(spi_master msb_spi_tb lsb_spi_tb spi_master_beh_impl)
+ENTITIES=(spi_master msb_spi_tb lsb_spi_tb spi_master_beh_impl msb_spi_burst_tb)
 
 echo "== Starting with the package"  | tee -a ${LOG_DIR}/${LOG_NAME}
 echo "  spi_package.vhd" | tee -a ${LOG_DIR}/${LOG_NAME}
@@ -42,6 +42,8 @@ do
     echo "  ${f}.vhd" | tee -a ${LOG_DIR}/${LOG_NAME}
     ghdl -a -v --workdir=${WORK} ${FPATH}${f}.vhd | tee -a ${LOG_DIR}/${LOG_NAME}
 done
+
+cd ${_OLDPWD}
 
 echo "== Elaborating entities" | tee -a ${LOG_DIR}/${LOG_NAME}
 for f in "${ENTITIES[@]}"
@@ -62,5 +64,4 @@ do
     fi
 done
 
-cd ${_OLDPWD}
 echo "== \u001b[32mDone\u001b[0m" | tee -a ${LOG_DIR}/${LOG_NAME}
