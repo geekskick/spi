@@ -62,7 +62,7 @@ for f in "${ENTITIES[@]}"
 do
     if [[ ${f} = *tb ]]; then
         echo "  ${f}" | tee -a ${LOG_DIR}/${LOG_NAME}
-        ghdl -r -v --workdir=${WORK} ${f} --vcd=${f}.vcd | tee -a ${LOG_DIR}/${LOG_NAME}
+        ghdl -r -v --workdir=${WORK} ${f} --wave=${f}.ghw | tee -a ${LOG_DIR}/${LOG_NAME}
         echo "  ${f} Complete" | tee -a ${LOG_DIR}/${LOG_NAME}
     fi
 done
