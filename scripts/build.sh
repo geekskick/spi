@@ -1,16 +1,10 @@
 #!/bin/bash -e
 
-# silent push and pop
-pushd () {
-    command pushd "$@" > /dev/null
-}
-
-popd () {
-    command popd "$@" > /dev/null
-}
-
 ROOT=`git rev-parse --show-toplevel`
-pushd .
+
+# pushd doesnt work when invoked from zsh
+_OLDPWD=`pwd`
+
 cd ${ROOT}
 LOG_DIR=${ROOT}
 LOG_NAME=output.log
@@ -31,7 +25,7 @@ WORK=${ROOT}/work
 cd src
 
 echo "== Analysing source files"  | tee -a ${LOG_DIR}/${LOG_NAME}
-ENTITIES=(spi_master msb_spi_tb lsb_spi_tb)
+ENTITIES=(spi_master msb_spi_tb lsb_spi_tb spi_master_beh_impl)
 
 echo "== Starting with the package"  | tee -a ${LOG_DIR}/${LOG_NAME}
 echo "  spi_package.vhd" | tee -a ${LOG_DIR}/${LOG_NAME}
@@ -49,12 +43,13 @@ do
     ghdl -a -v --workdir=${WORK} ${FPATH}${f}.vhd | tee -a ${LOG_DIR}/${LOG_NAME}
 done
 
-popd
 echo "== Elaborating entities" | tee -a ${LOG_DIR}/${LOG_NAME}
 for f in "${ENTITIES[@]}"
 do
     echo "  ${f}" | tee -a ${LOG_DIR}/${LOG_NAME}
-    ghdl -e -v --workdir=${WORK} ${f} | tee -a ${LOG_DIR}/${LOG_NAME}
+    if [[ ${f} != *impl ]]; then
+        ghdl -e -v --workdir=${WORK} ${f} | tee -a ${LOG_DIR}/${LOG_NAME}
+    fi
 done
 
 echo "== Running tests" | tee -a ${LOG_DIR}/${LOG_NAME}
@@ -67,4 +62,5 @@ do
     fi
 done
 
-echo "== Done" | tee -a ${LOG_DIR}/${LOG_NAME}
+cd ${_OLDPWD}
+echo "== \u001b[32mDone\u001b[0m" | tee -a ${LOG_DIR}/${LOG_NAME}
