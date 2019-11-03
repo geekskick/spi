@@ -31,7 +31,7 @@ WORK=${ROOT}/work
 cd src
 
 echo "== Analysing source files"  | tee -a ${LOG_DIR}/${LOG_NAME}
-ENTITIES=(spi_master spi_tb)
+ENTITIES=(spi_master msb_spi_tb lsb_spi_tb)
 
 echo "== Starting with the package"  | tee -a ${LOG_DIR}/${LOG_NAME}
 echo "  spi_package.vhd" | tee -a ${LOG_DIR}/${LOG_NAME}
