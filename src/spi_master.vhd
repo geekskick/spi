@@ -16,11 +16,23 @@ entity spi_master is
         en  : in std_logic;
         d   : in spi_master_in_t;
         q   : out spi_master_out_t;
-        pins: out spi_master_pins_t
+        pins: inout spi_master_pins_t
     );
 end entity;
 
 architecture rtl of spi_master is
+
+    -- https://groups.google.com/forum/#!msg/comp.lang.vhdl/eBZQXrw2Ngk/4H7oL8hdHMcJ
+    function reverse_any_vector (a: in std_logic_vector)
+    return std_logic_vector is
+        variable result: std_logic_vector(a'RANGE);
+        alias aa: std_logic_vector(a'REVERSE_RANGE) is a;
+    begin
+        for i in aa'RANGE loop
+            result(i) := aa(i);
+        end loop;
+        return result;
+    end; -- function reverse_any_vector
 
     constant clk_period : integer   := clk_speed_hz/sclk_speed_hz;
     type spi_private_state_t is (idle, sending, done);
@@ -49,11 +61,15 @@ begin
         if reg.state /= sending then
             
             if d.send = '1' then 
-                v.mosi_sr   := d.data; 
+                if msb_first then
+                    v.mosi_sr   := d.data; 
+                else
+                    v.mosi_sr := reverse_any_vector(d.data);
+                end if;
                 v.state     := sending;
                 v.bit_timer := 0;
                 v.next_bit  := 0;
-                v.miso_sr   := (others=>'0');
+                v.miso_sr   := (0 => pins.miso, others=>'0');
                 v.spi_clk   := not clk_idle; -- First bit needs a change of state in clock
             end if;
 
@@ -66,12 +82,8 @@ begin
                 v.next_bit  := reg.next_bit + 1; 
                 v.bit_timer := 0;
                 v.spi_clk   := not reg.spi_clk;
-
-                if msb_first then
-                    v.mosi_sr := reg.mosi_sr(data_width-2 downto 0) & '0';
-                else
-                    v.mosi_sr := '0' & reg.mosi_sr(data_width-1 downto 1);
-                end if;
+                v.miso_sr := reg.miso_sr(data_width-2 downto 0) & pins.miso;
+                v.mosi_sr := reg.mosi_sr(data_width-2 downto 0) & '0';
 
             -- Half way through the clock change it's state
             elsif v.bit_timer = (clk_period/2) -1 then
@@ -82,49 +94,52 @@ begin
             end if;
 
             if v.next_bit = data_width then 
-                v.state := done; 
+                v.state   := done;
                 v.spi_clk := clk_idle;
             end if;
 
         end if;
 
         -- Assign outputs from the register output
-        if msb_first then
-            pins.mosi <= reg.mosi_sr(data_width-1);
-        else
-            pins.mosi <= reg.mosi_sr(0);
-        end if;
+        pins.mosi <= reg.mosi_sr(data_width-1);
+        pins.clk  <= reg.spi_clk;
+        q.data    <= reg.miso_sr;
 
-        pins.clk <= reg.spi_clk;
-
-        -- If sending straight away
+        -- If sending done
         if reg.state = done then 
+
+            q.valid <= '1';
+            v.state := idle;
+            q.sent  <= '1';
+
+            -- And sending again straight away
             if d.send = '1' then
                 v.mosi_sr   := d.data; 
                 v.state     := sending;
                 v.bit_timer := 0;
                 v.next_bit  := 0;
-                v.miso_sr   := (others=>'0');
+                v.miso_sr   := (0 => pins.mosi, others=>'0');
                 v.spi_clk   := not clk_idle; -- First bit needs a change of state in clock
-            else
-                q.valid <= '1'; 
-                v.state := idle;
-                q.sent <= '1';
             end if;
         else 
-            q.valid <= '0'; 
-            q.sent <= '0';
+            q.valid <= '0';
+            q.sent  <= '0';
         end if;
         
         -- Put the variable into the register for the clock tick
         reg_in <= v;
         
     end process;
-    
+
+    -- Clock the reg_in into the register    
     clked: process(clk)
     begin
         if rising_edge(clk) then
-           reg <= reg_in; 
+            if rst = '1' then
+                reg <= (idle, 0, 0, (others=> '0'), (others=>'0'), clk_idle);
+            elsif en = '1' then
+                reg <= reg_in; 
+            end if;
         end if;
     end process;
 

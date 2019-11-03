@@ -32,7 +32,6 @@ architecture beh of spi_tb is
     signal sent : std_logic := uut_out.sent;
     signal mosi : std_logic := uut_pins.mosi;
     signal sclk : std_logic := uut_pins.clk;
-    signal miso : std_logic := uut_pins.miso;
 
     signal expected_sclk : std_logic := not clk_idle;
     signal bit_to_check : integer range -1 to data_width-1 := data_width-1;
@@ -98,6 +97,7 @@ begin
     stim: process
     begin
         uut_in.data <= to_send;
+        uut_pins.miso <= '1';
         ctl.en      <= '0';
         uut_in.send <= '0';
         ctl.rst     <= '0';
@@ -130,6 +130,8 @@ begin
 
         end loop;
 
+        assert valid = '1' report "Receive didn't assert valid" severity failure;
+        assert X"FF" = uut_out.data report "Data on miso didn't match ff" severity failure;
         assert sent = '1' report "Sent didn't assert" severity failure;
         assert sclk = clk_idle report "Clock not in idle state" severity failure;
 
