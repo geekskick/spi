@@ -13,6 +13,7 @@ architecture beh of msb_spi_burst_tb is
     constant clk_idle       : std_logic := '1';
     constant msb_first      : boolean   := true;
     constant half_period    : time      := period * (ticks_per_sclk/2);
+    constant data_width     : integer   := 8;
 
     signal to_send : std_logic_vector(data_width-1 downto 0) := X"AA";
 
@@ -23,8 +24,8 @@ architecture beh of msb_spi_burst_tb is
         done : boolean;
     end record;
     signal ctl     : tb_ctrl := ('0', '0', '0', false);
-    signal uut_in  : spi_master_in_t;
-    signal uut_out : spi_master_out_t;
+    signal uut_in  : spi_master_in_t(data(data_width-1 downto 0));
+    signal uut_out : spi_master_out_t(data(data_width-1 downto 0));
     signal uut_pins: spi_master_pins_t;
 
     signal valid: std_logic := uut_out.valid;
@@ -80,7 +81,8 @@ begin
         clk_speed_hz    => clk_speed_hz,
         sclk_speed_hz   => sclk_speed_hz,
         msb_first       => msb_first,
-        clk_idle        => clk_idle
+        clk_idle        => clk_idle,
+        data_width      => data_width
     )
     port map(
         clk     => ctl.clk,

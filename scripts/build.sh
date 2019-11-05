@@ -29,7 +29,7 @@ ENTITIES=(spi_master msb_spi_tb lsb_spi_tb spi_master_beh_impl msb_spi_burst_tb)
 
 echo "== Starting with the package"  | tee -a ${LOG_DIR}/${LOG_NAME}
 echo "  spi_package.vhd" | tee -a ${LOG_DIR}/${LOG_NAME}
-ghdl -a -v --workdir=${WORK} spi_package.vhd | tee -a ${LOG_DIR}/${LOG_NAME}
+ghdl -a --std=08 -v --workdir=${WORK} spi_package.vhd | tee -a ${LOG_DIR}/${LOG_NAME}
 
 echo "== Now the rest"  | tee -a ${LOG_DIR}/${LOG_NAME}
 for f in "${ENTITIES[@]}"
@@ -40,7 +40,7 @@ do
     fi
 
     echo "  ${f}.vhd" | tee -a ${LOG_DIR}/${LOG_NAME}
-    ghdl -a -v --workdir=${WORK} ${FPATH}${f}.vhd | tee -a ${LOG_DIR}/${LOG_NAME}
+    ghdl -a --std=08 -v --workdir=${WORK} ${FPATH}${f}.vhd | tee -a ${LOG_DIR}/${LOG_NAME}
 done
 
 cd ${_OLDPWD}
@@ -50,7 +50,7 @@ for f in "${ENTITIES[@]}"
 do
     echo "  ${f}" | tee -a ${LOG_DIR}/${LOG_NAME}
     if [[ ${f} != *impl ]]; then
-        ghdl -e -v --workdir=${WORK} ${f} | tee -a ${LOG_DIR}/${LOG_NAME}
+        ghdl -e --std=08 -v --workdir=${WORK} ${f} | tee -a ${LOG_DIR}/${LOG_NAME}
     fi
 done
 
@@ -59,7 +59,7 @@ for f in "${ENTITIES[@]}"
 do
     if [[ ${f} = *tb ]]; then
         echo "  ${f}" | tee -a ${LOG_DIR}/${LOG_NAME}
-        ghdl -r -v --workdir=${WORK} ${f} --wave=${f}.ghw | tee -a ${LOG_DIR}/${LOG_NAME}
+        ghdl -r --std=08 -v --workdir=${WORK} ${f} --wave=${f}.ghw | tee -a ${LOG_DIR}/${LOG_NAME}
         echo "  ${f} Complete" | tee -a ${LOG_DIR}/${LOG_NAME}
     fi
 done

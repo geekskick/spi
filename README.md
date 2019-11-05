@@ -5,6 +5,5 @@ To simulate this using ghdl use the build script in /scripts. It will build all 
 1. Currently in burst mode there is an extra clock tick between the two transactions.
 
 ## Todo
-1. Adjustable data with
-2. Adjustable CPHA
-3. Adjustable CPOL
+1. Adjustable CPHA
+2. Adjustable CPOL
