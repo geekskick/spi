@@ -8,7 +8,7 @@ entity spi_master is
         clk_speed_hz    : integer range 1_000_000 to 100_000_000;
         sclk_speed_hz   : integer range 9_600 to 100_000;
         msb_first       : boolean;
-        clk_idle        : std_logic;
+        cpol            : std_logic;
         data_width      : integer range 7 to 9
     );
     port(

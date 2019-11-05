@@ -29,8 +29,8 @@ architecture behavioural of spi_master is
         spi_clk : std_logic;
     end record;
 
-    signal reg      : spi_private_register_t := (idle, 0, 0, (others=> '0'), (others=>'0'), clk_idle);
-    signal reg_in   : spi_private_register_t := (idle, 0, 0, (others=> '0'), (others=>'0'), clk_idle);
+    signal reg      : spi_private_register_t := (idle, 0, 0, (others=> '0'), (others=>'0'), cpol);
+    signal reg_in   : spi_private_register_t := (idle, 0, 0, (others=> '0'), (others=>'0'), cpol);
 
 begin
 
@@ -53,7 +53,7 @@ begin
                 v.bit_timer := 0;
                 v.next_bit  := 0;
                 v.miso_sr   := (0 => pins.miso, others=>'0');
-                v.spi_clk   := not clk_idle; -- First bit needs a change of state in clock
+                v.spi_clk   := not cpol; -- First bit needs a change of state in clock
             end if;
 
         end if;
@@ -78,7 +78,7 @@ begin
 
             if v.next_bit = data_width then 
                 v.state   := done;
-                v.spi_clk := clk_idle;
+                v.spi_clk := cpol;
             end if;
 
         end if;
@@ -102,7 +102,7 @@ begin
                 v.bit_timer := 0;
                 v.next_bit  := 0;
                 v.miso_sr   := (0 => pins.mosi, others=>'0');
-                v.spi_clk   := not clk_idle; -- First bit needs a change of state in clock
+                v.spi_clk   := not cpol; -- First bit needs a change of state in clock
             end if;
         else 
             q.valid <= '0';
@@ -119,7 +119,7 @@ begin
     begin
         if rising_edge(clk) then
             if rst = '1' then
-                reg <= (idle, 0, 0, (others=> '0'), (others=>'0'), clk_idle);
+                reg <= (idle, 0, 0, (others=> '0'), (others=>'0'), cpol);
             elsif en = '1' then
                 reg <= reg_in; 
             end if;

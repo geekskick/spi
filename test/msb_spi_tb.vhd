@@ -10,7 +10,7 @@ architecture beh of msb_spi_tb is
     constant clk_speed_hz   : integer   := 10000000;
     constant sclk_speed_hz  : integer   := 100000;
     constant ticks_per_sclk : integer   := clk_speed_hz/sclk_speed_hz;
-    constant clk_idle       : std_logic := '1';
+    constant cpol           : std_logic := '1';
     constant msb_first      : boolean   := true;
     constant half_period    : time      := period * (ticks_per_sclk/2);
     constant data_width     : integer   := 8;
@@ -33,7 +33,7 @@ architecture beh of msb_spi_tb is
     signal mosi : std_logic := uut_pins.mosi;
     signal sclk : std_logic := uut_pins.clk;
 
-    signal expected_sclk : std_logic := not clk_idle;
+    signal expected_sclk : std_logic := not cpol;
     signal bit_to_check  : integer range -1 to data_width-1 := data_width-1;
 
     procedure check_sclk(signal expected_state: in std_logic;
@@ -81,7 +81,7 @@ begin
         clk_speed_hz    => clk_speed_hz,
         sclk_speed_hz   => sclk_speed_hz,
         msb_first       => msb_first,
-        clk_idle        => clk_idle,
+        cpol            => cpol,
         data_width      => data_width
     )
     port map(
@@ -113,12 +113,12 @@ begin
         wait for period / 4; -- ensure assertions are after a rising edge
 
         wait for period * 9;
-        assert sclk = clk_idle report "Clock in wrong idle state" severity failure;
+        assert sclk = cpol report "Clock in wrong idle state" severity failure;
 
         uut_in.send   <= '1';
         ctl.en        <= '1';
         ctl.rst       <= '0';
-        expected_sclk <= not clk_idle;
+        expected_sclk <= not cpol;
 
         wait for period;
         uut_in.send <= '0';
@@ -141,11 +141,11 @@ begin
         assert valid = '1' report "Receive didn't assert valid" severity failure;
         assert X"FF" = uut_out.data report "Data on miso didn't match ff" severity failure;
         assert sent  = '1' report "Sent didn't assert" severity failure;
-        assert sclk  = clk_idle report "Clock not in idle state" severity failure;
+        assert sclk  = cpol report "Clock not in idle state" severity failure;
 
         wait for period;
         assert sent = '0' report "Sent didn't clear" severity failure;
-        assert sclk = clk_idle report "Clock not in idle state" severity failure;
+        assert sclk = cpol report "Clock not in idle state" severity failure;
 
         ctl.done <= true;
         wait;
