@@ -6,4 +6,3 @@ To simulate this using ghdl use the build script in /scripts. It will build all 
 
 ## Todo
 1. Adjustable CPHA
-2. Adjustable CPOL
